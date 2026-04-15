@@ -1,5 +1,4 @@
-#include "screen.h"
-#include "mystring.h"
+#include "../include/screen.h"
 #include <stdio.h>
 
 void screen_print(const char *s) {

@@ -1,4 +1,4 @@
-#include "keyboard.h"
+#include "../include/keyboard.h"
 #include <stdio.h>
 
 int keyboard_readline(char *buf, int len) {

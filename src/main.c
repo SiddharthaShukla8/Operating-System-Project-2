@@ -1,8 +1,8 @@
-#include "keyboard.h"
-#include "mystring.h"
-#include "math.h"
-#include "screen.h"
-#include "memory.h"
+#include "../include/keyboard.h"
+#include "../include/mystring.h"
+#include "../include/math.h"
+#include "../include/screen.h"
+
 
 #include <stdlib.h>
 

@@ -1,4 +1,4 @@
-#include "math.h"
+#include "../include/math.h"
 
 int my_multiply(int a, int b) {
     int result = 0;

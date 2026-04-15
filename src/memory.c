@@ -1,4 +1,4 @@
-#include "memory.h"
+#include "../include/memory.h"
 
 /* Simulated virtual RAM */
 #define POOL_SIZE 65536

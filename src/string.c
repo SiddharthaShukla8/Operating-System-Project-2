@@ -1,5 +1,5 @@
-#include "mystring.h"
-#include "memory.h"
+#include "../include/mystring.h"
+#include "../include/memory.h"
 #include <stdlib.h>
 
 int my_strlen(const char *s) {
