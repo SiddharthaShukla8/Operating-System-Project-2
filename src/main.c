@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 
-
+// comparing user input with a generated sentence
 int main() {
     char input[200];
 
