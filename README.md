@@ -1,223 +1,116 @@
-# TermType
+# Typing Tutor
 
-TermType is a typing tutor project built for an Operating Systems style capstone. The project combines a custom C backend with a browser-based typing interface. The C side is responsible for low-level modules such as string handling, memory management, math helpers, screen helpers, keyboard helpers, and prompt generation. The frontend is used to present the typing session, live metrics, and final report in a clean way.
+Typing Tutor is an OS-inspired typing tutor project built for an Operating Systems Laboratory capstone. The project combines a custom C backend with a browser-based interactive interface. The backend is responsible for low-level modules such as string handling, memory management, math helpers, screen helpers, keyboard helpers, and dynamic prompt generation, while the frontend provides a high-performance typing experience with live metrics.
 
 ## 1. Core Objective
 
-This project is built to demonstrate:
-
-- custom low-level C modules instead of depending on standard library logic for the main engine
-- a working interactive typing application
-- integration between memory, string, math, keyboard, and screen style modules
-- a full typing workflow with prompt generation, live input handling, WPM calculation, accuracy calculation, and a final report
+This project demonstrates:
+- **Custom Low-Level C Modules**: Core engine built without standard library dependencies for critical logic.
+- **Interactive Full-Stack Application**: Real-time integration between a C server and a web frontend.
+- **System Module Integration**: Coordination between memory, string, math, keyboard, and screen-style modules.
+- **Performance Analytics**: Precise calculation of WPM, Accuracy, and character-level statistics.
 
 ## 2. Project Track
 
 This project fits **Track A: Interactive Typing Tutor**.
 
-The user starts a typing session, types in real time, gets instant feedback, and sees a final performance report with:
+The user starts a typing session, receives instant feedback, and views a comprehensive final performance report including:
+- **WPM & Raw WPM**
+- **Accuracy & Consistency**
+- **Detailed Character Breakdown** (Correct, Incorrect, Missed, Extra)
+- **Session History Graph** (Performance over time)
 
-- WPM
-- raw WPM
-- accuracy
-- consistency
-- correct and wrong words
-- correct, incorrect, and missed characters
-- total typed characters
-- session duration
-- a performance graph
+## 3. Project Team
 
-## 3. Folder Structure
+Developed by:
+1. **Siddhartha Shukla** (230104)
+2. **Sugat Athawale** (230109)
+3. **Piyush Kaushal** (230112)
+
+## 4. Folder Structure
 
 ```text
-TermType-main/
+TypingTutor/
 ├── backend/
-│   ├── include/
+│   ├── include/            # Custom headers for OS-style modules
 │   │   ├── keyboard.h
 │   │   ├── math.h
 │   │   ├── memory.h
 │   │   ├── mystring.h
 │   │   └── screen.h
-│   ├── src/
+│   ├── src/                # Modular C implementations
 │   │   ├── keyboard.c
 │   │   ├── math.c
 │   │   ├── memory.c
 │   │   ├── screen.c
 │   │   └── string.c
-│   └── server.c
+│   └── server.c            # API Server & Task Management
 ├── frontend/
-│   ├── app.js
-│   ├── index.html
-│   └── style.css
-├── Makefile
-├── run.sh
+│   ├── app.js              # Reactive UI Logic
+│   ├── index.html          # Application Structure
+│   └── style.css           # Premium Aesthetics
+├── Makefile                # Build Automation
+├── run.sh                  # Execution Script
 └── README.md
 ```
 
-## 4. Custom Libraries
-
-### `string.c`
-
-Current role:
-
-- string length
-- string compare
-- typing prompt generation
-
-Used for:
-
-- building practice text from a word pool
-- returning prompt text to the typing interface
+## 5. Custom Libraries & OS Simulation
 
 ### `memory.c`
+- **Role**: Fixed memory-pool allocator (`my_alloc`, `my_reset`).
+- **OS Simulation**: Simulates static kernel memory allocation, ensuring zero fragmentation and deterministic performance.
 
-Current role:
-
-- virtual fixed memory pool
-- custom allocation through `my_alloc`
-- pool reset through `my_reset`
-
-Used for:
-
-- allocating the generated typing prompt inside the custom memory region
+### `string.c`
+- **Role**: Length calculation, string comparison, and prompt synthesis.
+- **OS Simulation**: Simulates low-level character buffer processing used in terminal drivers.
 
 ### `math.c`
+- **Role**: Custom multiplication and division logic.
+- **OS Simulation**: Replaces standard math headers with optimized integer arithmetic for system metrics.
 
-Current role:
+---
 
-- custom multiplication
-- custom division
+## 6. Workflow & Integration
 
-Used for:
+1. **Frontend Request**: The browser requests a typing prompt from the C backend.
+2. **Backend Synthesis**: The server resets the memory pool (`my_reset()`) and generates a prompt using `string.c`.
+3. **Prompt Delivery**: The generated text is served via the API to the frontend.
+4. **Interactive Session**: The user types; the frontend calculates live metrics (WPM/Acc).
+5. **Final Analytics**: Upon completion, a detailed report and performance graph are generated.
 
-- arithmetic support for the backend module set
+## 7. Features & Controls
 
-### `screen.c`
+### Modes
+- **Time**: 15s, 30s, 60s challenges.
+- **Words**: Fixed word count targets.
+- **Zen**: Infinite typing for practice.
+- **Custom**: User-defined parameters.
 
-Current role:
+### Controls
+- `Tab`: Instant Restart.
+- `Backspace`: Character deletion.
+- `Space`: Word submission.
+- `Command Line`: Accessible via `ESC` or `Ctrl+Shift+P`.
 
-- terminal print helpers
-
-Used for:
-
-- basic output routines for the OS-style library set
-
-### `keyboard.c`
-
-Current role:
-
-- line-based keyboard input helper
-
-Used for:
-
-- basic input support for the OS-style library set
-
-## 5. Integration Flow
-
-This is the easiest way to explain the workflow in viva or presentation:
-
-1. The browser opens the typing interface.
-2. The frontend requests a prompt from the C backend.
-3. The backend resets its custom memory pool using `my_reset()`.
-4. `string.c` generates the practice text.
-5. `memory.c` provides storage for that prompt.
-6. The prompt is returned to the frontend.
-7. The frontend renders the prompt immediately when the session loads.
-8. As the user types, the frontend tracks correct characters, incorrect characters, missed characters, raw speed, and accuracy.
-9. At the end of the session, the frontend builds the final report and performance graph.
-
-Short explanation sentence:
-
-`frontend input -> backend prompt generation -> custom memory + string modules -> live typing metrics -> final report`
-
-## 6. Frontend Workflow
-
-The frontend now follows a cleaner and more structured session flow:
-
-1. Choose a mode: `time`, `words`, `quote`, `zen`, or `custom`
-2. Choose length where applicable
-3. Enable optional toggles:
-   punctuation
-   numbers
-   sound
-4. Prompt loads immediately on screen
-5. User types in the main typing area
-6. Extra characters beyond the word length are blocked
-7. Pressing space without typing the word does not skip ahead
-8. Backspace can move into the previous submitted word
-9. Final report appears automatically when the session ends
-
-## 7. Controls
-
-- `Tab` restarts the session
-- `Backspace` deletes the previous character
-- `Space` submits the current word only after at least one character is typed
-- `Shift + Enter` finishes zen mode
-- `Restart` button starts a fresh run
-- `Sound` toggle enables or disables typing feedback tones
+---
 
 ## 8. Build and Run
 
-### Option 1: Direct build
+### Prerequisites
+- GCC Compiler
+- Make
 
-```bash
-make
-./typing_server
-```
-
-Then open:
-
-```text
-http://localhost:3000/
-```
-
-### Option 2: Run script
-
+### Quick Start
 ```bash
 chmod +x run.sh
 ./run.sh
 ```
 
-## 9. What Works
+Once running, access the application at:
+`http://localhost:8080/`
 
-- prompt is visible from the beginning of the session
-- minimal and more standard dark UI
-- time, words, quote, zen, and custom modes
-- punctuation and numbers toggles
-- sound on/off toggle
-- live WPM, raw WPM, and accuracy
-- blocked empty-word space skips
-- blocked overflow typing past the current word
-- final session report with detailed statistics
-- performance graph at the end of the test
+---
 
-## 10. Known Issues
+## 9. Suggested Viva Summary
 
-- the main user demo is browser-based, not a pure terminal-rendered final loop
-- `screen.c` and `keyboard.c` exist as project modules, but the current polished demo uses the web interface as the primary interaction layer
-- the prompt generator still uses a fixed word pool, so content variety can be improved further
-- the sound feature depends on browser audio permission and may only start after user interaction
-
-## 11. How To Explain The Project
-
-You can explain the project in four short blocks:
-
-### A. Problem
-
-We needed a real interactive application built around custom C modules instead of relying on standard high-level helpers.
-
-### B. Engine
-
-The backend is split into custom libraries for memory, string handling, math, keyboard, and screen behavior. These act like small OS services.
-
-### C. Application
-
-The final application is a typing tutor. The backend generates prompts and manages low-level support, while the frontend handles real-time typing feedback and reporting.
-
-### D. Outcome
-
-The project now has a stable typing flow, correct WPM and accuracy tracking, a structured final report, and a cleaner presentation that is easier to demo and explain.
-
-## 12. Suggested Viva Summary
-
-TermType is an OS-inspired typing tutor where a custom C backend provides prompt generation and low-level support modules, and the frontend presents a real-time typing session with accurate performance analysis.
+**Typing Tutor** is an OS-inspired application where a modular C backend provides low-level system services (memory, string, math) and prompt generation, while a modern frontend delivers a high-fidelity typing experience with real-time performance analytics.
