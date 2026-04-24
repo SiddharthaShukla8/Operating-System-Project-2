@@ -11,7 +11,7 @@
 int main() {
     char input[200];
 
-    srand(1);
+    srand(2);
 
     char *sentence = generate_sentence(5);
 
