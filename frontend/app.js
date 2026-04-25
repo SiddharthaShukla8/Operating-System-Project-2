@@ -1,19 +1,25 @@
 const sentenceWrapper = document.getElementById('sentence-wrapper');
 const cursor = document.getElementById('cursor');
-const timerDisplay = document.getElementById('timer');
-const wpmDisplay = document.getElementById('wpm');
-const accDisplay = document.getElementById('accuracy');
+const timerDisplay = document.getElementById('timer-display');
 const restartBtn = document.getElementById('restart-btn');
-const resultsScreen = document.getElementById('results');
+const playAgainBtn = document.getElementById('play-again-btn');
+const gameView = document.getElementById('game-view');
+const resultView = document.getElementById('result-view');
 
 let state = {
     sentence: "",
     currentIndex: 0,
     startTime: null,
-    errors: 0,
+    stats: {
+        correct: 0,
+        incorrect: 0,
+        extra: 0,
+        missed: 0
+    },
     totalTyped: 0,
     isFinished: false,
     timerInterval: null,
+    selectedTime: 30,
     timeLeft: 30
 };
 
@@ -41,6 +47,9 @@ function updateCursor() {
         const wrapperRect = sentenceWrapper.getBoundingClientRect();
         cursor.style.left = `${rect.left - wrapperRect.left}px`;
         cursor.style.top = `${rect.top - wrapperRect.top}px`;
+        cursor.classList.remove('hidden');
+    } else {
+        cursor.classList.add('hidden');
     }
 }
 
@@ -58,7 +67,10 @@ function handleInput(e) {
     if (key === 'Backspace') {
         if (state.currentIndex > 0) {
             state.currentIndex--;
-            spans[state.currentIndex].className = '';
+            const span = spans[state.currentIndex];
+            if (span.classList.contains('correct')) state.stats.correct--;
+            if (span.classList.contains('incorrect')) state.stats.incorrect--;
+            span.className = '';
             updateCursor();
         }
         return;
@@ -66,19 +78,22 @@ function handleInput(e) {
 
     if (key.length !== 1) return;
 
+    if (state.currentIndex >= state.sentence.length) return;
+
     const targetChar = state.sentence[state.currentIndex];
+    const span = spans[state.currentIndex];
     
     if (key === targetChar) {
-        spans[state.currentIndex].className = 'correct';
+        span.className = 'correct';
+        state.stats.correct++;
     } else {
-        spans[state.currentIndex].className = 'incorrect';
-        state.errors++;
+        span.className = 'incorrect';
+        state.stats.incorrect++;
     }
 
     state.currentIndex++;
     state.totalTyped++;
     updateCursor();
-    updateStats();
 
     if (state.currentIndex === state.sentence.length) {
         finishSession();
@@ -86,6 +101,7 @@ function handleInput(e) {
 }
 
 function startTimer() {
+    timerDisplay.innerText = state.timeLeft;
     state.timerInterval = setInterval(() => {
         state.timeLeft--;
         timerDisplay.innerText = state.timeLeft;
@@ -95,45 +111,50 @@ function startTimer() {
     }, 1000);
 }
 
-function updateStats() {
-    const elapsed = (Date.now() - state.startTime) / 1000 / 60; // in minutes
-    const wpm = Math.round((state.totalTyped / 5) / (elapsed || 1));
-    const acc = Math.round(((state.totalTyped - state.errors) / state.totalTyped) * 100);
-
-    wpmDisplay.innerText = wpm;
-    accDisplay.innerText = acc;
-}
-
 function finishSession() {
     state.isFinished = true;
     clearInterval(state.timerInterval);
     
-    document.getElementById('final-wpm').innerText = wpmDisplay.innerText;
-    document.getElementById('final-acc').innerText = accDisplay.innerText + '%';
-    resultsScreen.classList.remove('hidden');
+    const elapsed = (Date.now() - state.startTime) / 1000 / 60; // in minutes
+    const wpm = Math.round((state.stats.correct / 5) / (elapsed || 1));
+    const totalPossible = state.totalTyped;
+    const acc = totalPossible > 0 ? Math.round((state.stats.correct / totalPossible) * 100) : 0;
+
+    document.getElementById('final-wpm').innerText = wpm;
+    document.getElementById('final-acc').innerText = acc + '%';
+    document.getElementById('res-time').innerText = state.selectedTime + 's';
+    
+    state.stats.missed = state.sentence.length - state.currentIndex;
+    document.getElementById('res-chars').innerText = `${state.stats.correct}/${state.stats.incorrect}/${state.stats.extra}/${state.stats.missed}`;
+
+    gameView.classList.add('hidden');
+    resultView.classList.remove('hidden');
 }
 
 function restart() {
     clearInterval(state.timerInterval);
     state = {
-        sentence: "",
+        ...state,
         currentIndex: 0,
         startTime: null,
-        errors: 0,
+        stats: { correct: 0, incorrect: 0, extra: 0, missed: 0 },
         totalTyped: 0,
         isFinished: false,
         timerInterval: null,
-        timeLeft: 30
+        timeLeft: state.selectedTime
     };
-    timerDisplay.innerText = "30";
-    wpmDisplay.innerText = "0";
-    accDisplay.innerText = "100";
-    resultsScreen.classList.add('hidden');
+    timerDisplay.innerText = state.selectedTime;
+    gameView.classList.remove('hidden');
+    resultView.classList.add('hidden');
     fetchSentence();
 }
 
 window.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Tab') {
+        e.preventDefault(); // Prevent tab focus
+    }
+    
+    if (e.key === 'Enter' || (e.key === 'r' && e.ctrlKey)) {
         restart();
     } else {
         handleInput(e);
@@ -141,6 +162,15 @@ window.addEventListener('keydown', (e) => {
 });
 
 restartBtn.addEventListener('click', restart);
-document.getElementById('play-again').addEventListener('click', restart);
+playAgainBtn.addEventListener('click', restart);
+
+document.querySelectorAll('#time-selection span').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('#time-selection span').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.selectedTime = parseInt(btn.dataset.time);
+        restart();
+    });
+});
 
 fetchSentence();

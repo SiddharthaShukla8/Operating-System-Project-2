@@ -9,20 +9,24 @@
 <body>
     <div id="app">
         <header id="header">
-            <div id="logo">monkeytype-c</div>
+            <div id="logo">monkeytype</div>
             <div id="modes">
-                <span>timed</span>
-                <span>words</span>
-                <span>quote</span>
+                <div class="mode-group">
+                    <span>timed</span>
+                    <span>words</span>
+                    <span>quote</span>
+                </div>
+                <div class="mode-group" id="time-selection">
+                    <span data-time="15">15</span>
+                    <span data-time="30" class="active">30</span>
+                    <span data-time="60">60</span>
+                    <span data-time="120">120</span>
+                </div>
             </div>
         </header>
 
-        <main>
-            <div id="stats-bar">
-                <div class="stat"><span id="timer">30</span>s</div>
-                <div class="stat"><span id="wpm">0</span> wpm</div>
-                <div class="stat"><span id="accuracy">100</span>% acc</div>
-            </div>
+        <main id="game-view">
+            <div id="timer-display">30</div>
 
             <div id="typing-container">
                 <div id="sentence-wrapper">
@@ -30,31 +34,50 @@
                 </div>
                 <div id="cursor"></div>
             </div>
+
+            <div id="game-controls">
+                <button id="restart-btn" title="Restart Test">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>
+                </button>
+            </div>
+        </main>
+
+        <main id="result-view" class="hidden">
+            <div class="stats-header">
+                <div class="big-stat">
+                    <div class="label">wpm</div>
+                    <div id="final-wpm" class="value">0</div>
+                </div>
+                <div class="big-stat">
+                    <div class="label">acc</div>
+                    <div id="final-acc" class="value">0%</div>
+                </div>
+            </div>
+            
+            <div class="detailed-stats">
+                <div class="small-stat">
+                    <span class="label">test type</span>
+                    <span class="value">time <span id="res-time">30</span><br>english</span>
+                </div>
+                <div class="small-stat">
+                    <span class="label">characters</span>
+                    <span id="res-chars" class="value">0/0/0/0</span>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="play-again-btn" title="Restart Test">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>
+                </button>
+            </div>
         </main>
 
         <footer id="footer">
-            <div id="controls">
-                <button id="restart-btn">Restart [Enter]</button>
-            </div>
             <div id="tips">
-                <span>tab + enter - restart test</span>
+                <span>tab + enter - restart test</span><br>
+                <span>esc or ctrl+shift+p - command line</span>
             </div>
         </footer>
-
-        <div id="results" class="hidden">
-            <h2>Results</h2>
-            <div class="result-grid">
-                <div class="result-box">
-                    <span class="label">wpm</span>
-                    <span id="final-wpm" class="value">0</span>
-                </div>
-                <div class="result-box">
-                    <span class="label">acc</span>
-                    <span id="final-acc" class="value">0%</span>
-                </div>
-            </div>
-            <button id="play-again">Play Again</button>
-        </div>
     </div>
     <script src="app.js"></script>
 </body>
