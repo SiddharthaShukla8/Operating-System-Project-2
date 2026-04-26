@@ -107,7 +107,7 @@ chmod +x run.sh
 ```
 
 Once running, access the application at:
-`http://localhost:8080/`
+`http://localhost:3000/`
 
 ---
 
