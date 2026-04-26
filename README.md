@@ -1,10 +1,10 @@
-# TermType: Modular Typing Tutor
+# Typing Tutor: Modular Terminal-Based Application
 
-TermType is a high-performance, modular typing tutor application built as part of the Operating Systems Laboratory. The project demonstrates low-level system programming concepts in C, integrated with a modern web-based frontend.
+Typing Tutor is a high-performance, modular typing tutor application built as part of the Operating Systems Laboratory. The project demonstrates low-level system programming concepts in C, integrated with a modern web-based frontend.
 
 ## 🚀 Overview
 
-TermType evolved from a terminal-based CLI tool (Phase 1) into a full-stack interactive application (Phase 2). It features a custom-built C backend that simulates core operating system modules, providing a robust foundation for character processing and session management.
+Typing Tutor evolved from a terminal-based CLI tool (Phase 1) into a full-stack interactive application (Phase 2). It features a custom-built C backend that simulates core operating system modules, providing a robust foundation for character processing and session management.
 
 ### Key Features
 - **Modular C Backend**: Implements custom libraries for memory management, string manipulation, and terminal I/O.
