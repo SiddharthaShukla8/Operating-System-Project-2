@@ -1,4 +1,3 @@
-const WORD_FETCH_LIMIT = 20;
 const TIME_MODE_WORD_BUFFER = 120;
 const ZEN_MODE_WORD_BUFFER = 160;
 const DEFAULT_CUSTOM_TEXT = 'Operating systems reward precision, calm hands, and a typing rhythm that stays accurate under pressure.';
@@ -60,11 +59,48 @@ const state = {
         correctChars: 0,
         incorrectChars: 0,
         totalTypedChars: 0
-    }
+    },
+    promptMeta: null
 };
 
 let chart = null;
 let audioContext = null;
+
+function createEmptyMemoryStats() {
+    return {
+        totalPool: 0,
+        usedBytes: 0,
+        freeBytes: 0,
+        allocations: 0,
+        deallocations: 0,
+        activeAllocations: 0,
+        fragmentationBlocks: 0,
+        largestFreeBlock: 0,
+        sessionAllocations: 0,
+        sessionDeallocations: 0,
+        sessionUsedBytes: 0
+    };
+}
+
+function normalizePromptMeta(meta = {}) {
+    const memory = { ...createEmptyMemoryStats(), ...(meta.memory || {}) };
+
+    return {
+        source: meta.source || 'backend json dataset',
+        requestedWords: Number(meta.requestedWords || 0),
+        generatedWords: Number(meta.generatedWords || 0),
+        sentenceLength: Number(meta.sentenceLength || 0),
+        datasetWords: Number(meta.datasetWords || 0),
+        duplicatesAvoided: Number(meta.duplicatesAvoided || 0),
+        difficulty: meta.difficulty || 'mixed',
+        punctuationEnabled: Boolean(meta.punctuationEnabled),
+        numbersEnabled: Boolean(meta.numbersEnabled),
+        inputBufferCapacity: Number(meta.inputBufferCapacity || 0),
+        inputBufferUsage: Number(meta.inputBufferUsage || 0),
+        sessionMemoryFootprint: Number(meta.sessionMemoryFootprint || memory.sessionUsedBytes || 0),
+        memory
+    };
+}
 
 function sanitizeCustomText(text) {
     return text
@@ -80,6 +116,14 @@ function getModeSummary() {
     if (state.mode === 'quote') return `quote ${state.selectedQuoteWords} words`;
     if (state.mode === 'custom') return 'custom text';
     return 'zen mode';
+}
+
+function getModeDetail() {
+    if (state.mode === 'time') return `${state.selectedTime}s`;
+    if (state.mode === 'words') return String(state.selectedWords);
+    if (state.mode === 'quote') return `${state.selectedQuoteWords} words`;
+    if (state.mode === 'custom') return 'manual paragraph';
+    return 'open ended';
 }
 
 function getPromptTitle() {
@@ -98,6 +142,11 @@ function getTargetWordCount() {
     return ZEN_MODE_WORD_BUFFER;
 }
 
+function getDifficultyConfig() {
+    if (state.mode === 'quote') return 'hard';
+    return 'mixed';
+}
+
 function buildFallbackWords(count) {
     const words = [];
     for (let index = 0; index < count; index += 1) {
@@ -106,11 +155,23 @@ function buildFallbackWords(count) {
     return words;
 }
 
-async function fetchWordChunk(count) {
+function decorateWordsForMode(words) {
+    const decoratedWords = [...words];
+
+    if (state.mode === 'quote' && decoratedWords.length > 0) {
+        decoratedWords[0] = decoratedWords[0].charAt(0).toUpperCase() + decoratedWords[0].slice(1);
+        decoratedWords[decoratedWords.length - 1] = `${decoratedWords[decoratedWords.length - 1]}.`;
+    }
+
+    return decoratedWords;
+}
+
+async function fetchPromptPayload(count) {
     const params = new URLSearchParams();
     params.set('mode', state.mode);
     params.set('count', String(count));
-    if (state.punctuation) params.set('punctuation', 'true');
+    params.set('difficulty', getDifficultyConfig());
+    if (state.punctuation || state.mode === 'quote') params.set('punctuation', 'true');
     if (state.numbers) params.set('numbers', 'true');
 
     const response = await fetch(`/api/sentence?${params.toString()}`);
@@ -119,56 +180,74 @@ async function fetchWordChunk(count) {
     }
 
     const data = await response.json();
-    return String(data.sentence || '')
-        .split(' ')
-        .filter(Boolean);
+    return {
+        words: String(data.sentence || '')
+            .split(' ')
+            .filter(Boolean),
+        meta: normalizePromptMeta(data.meta || {})
+    };
 }
 
-async function fetchWords(totalCount) {
-    const words = [];
-
-    while (words.length < totalCount) {
-        const remaining = totalCount - words.length;
-        const chunkSize = remaining > WORD_FETCH_LIMIT ? WORD_FETCH_LIMIT : remaining;
-        const chunk = await fetchWordChunk(chunkSize);
-
-        if (!chunk.length) break;
-        words.push(...chunk);
-    }
-
-    if (!words.length) {
-        return buildFallbackWords(totalCount);
-    }
-
-    if (words.length < totalCount) {
-        words.push(...buildFallbackWords(totalCount - words.length));
-    }
-
-    return words.slice(0, totalCount);
+function buildFallbackMeta(words) {
+    return normalizePromptMeta({
+        source: 'frontend fallback',
+        requestedWords: words.length,
+        generatedWords: words.length,
+        sentenceLength: words.join(' ').length,
+        datasetWords: FALLBACK_WORD_POOL.length,
+        duplicatesAvoided: 0,
+        difficulty: 'mixed',
+        punctuationEnabled: state.punctuation || state.mode === 'quote',
+        numbersEnabled: state.numbers
+    });
 }
 
-async function buildPromptWords() {
+function buildCustomMeta(words, source) {
+    return normalizePromptMeta({
+        source: 'custom paragraph',
+        requestedWords: words.length,
+        generatedWords: words.length,
+        sentenceLength: source.length,
+        datasetWords: 0,
+        duplicatesAvoided: 0,
+        difficulty: 'manual',
+        punctuationEnabled: /[.,!?;:]/.test(source),
+        numbersEnabled: /\d/.test(source),
+        inputBufferCapacity: 0,
+        inputBufferUsage: 0,
+        sessionMemoryFootprint: 0
+    });
+}
+
+async function buildPromptPayload() {
     if (state.mode === 'custom') {
         const source = elements.customText.value.trim() || state.customText || DEFAULT_CUSTOM_TEXT;
         const customWords = sanitizeCustomText(source);
-        return customWords.length ? customWords : sanitizeCustomText(DEFAULT_CUSTOM_TEXT);
+        const normalizedWords = customWords.length ? customWords : sanitizeCustomText(DEFAULT_CUSTOM_TEXT);
+        return {
+            words: normalizedWords,
+            meta: buildCustomMeta(normalizedWords, source)
+        };
     }
 
     try {
-        const words = await fetchWords(getTargetWordCount());
-        if (state.mode === 'quote' && words.length > 0) {
-            words[0] = words[0].charAt(0).toUpperCase() + words[0].slice(1);
-            words[words.length - 1] = `${words[words.length - 1]}.`;
+        const payload = await fetchPromptPayload(getTargetWordCount());
+        if (payload.words.length > 0) {
+            return payload;
         }
-        return words;
     } catch (error) {
-        const fallback = buildFallbackWords(getTargetWordCount());
-        if (state.mode === 'quote' && fallback.length > 0) {
-            fallback[0] = fallback[0].charAt(0).toUpperCase() + fallback[0].slice(1);
-            fallback[fallback.length - 1] = `${fallback[fallback.length - 1]}.`;
-        }
-        return fallback;
+        const fallback = decorateWordsForMode(buildFallbackWords(getTargetWordCount()));
+        return {
+            words: fallback,
+            meta: buildFallbackMeta(fallback)
+        };
     }
+
+    const fallback = decorateWordsForMode(buildFallbackWords(getTargetWordCount()));
+    return {
+        words: fallback,
+        meta: buildFallbackMeta(fallback)
+    };
 }
 
 function resetRuntimeState() {
@@ -564,6 +643,26 @@ function calculateConsistency() {
     return Math.max(0, Math.round(100 - ((deviation / average) * 100)));
 }
 
+function setReportValue(id, value) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = value;
+    }
+}
+
+function formatToggle(value) {
+    return value ? 'on' : 'off';
+}
+
+function formatBytes(value) {
+    return `${Number(value || 0)} bytes`;
+}
+
+function formatInputBuffer(meta) {
+    if (!meta.inputBufferCapacity) return 'n/a';
+    return `${meta.inputBufferUsage} / ${meta.inputBufferCapacity}`;
+}
+
 function renderChart() {
     const context = document.getElementById('performance-chart').getContext('2d');
     if (chart) chart.destroy();
@@ -642,18 +741,33 @@ function finishSession() {
     const wpm = Math.round((summary.correctChars / 5) / elapsedMinutes);
     const consistency = calculateConsistency();
     const errorRate = Math.max(0, 100 - accuracy);
+    const meta = state.promptMeta || normalizePromptMeta();
+    const memory = meta.memory || createEmptyMemoryStats();
 
-    document.getElementById('final-wpm').textContent = String(wpm);
-    document.getElementById('res-raw').textContent = String(raw);
-    document.getElementById('final-acc').textContent = `${accuracy}%`;
-    document.getElementById('res-consistency').textContent = `${consistency}%`;
-    document.getElementById('res-mode').textContent = state.mode;
-    document.getElementById('res-time').textContent = getModeSummary();
-    document.getElementById('res-duration').textContent = `${elapsedSeconds}s`;
-    document.getElementById('res-words').textContent = `${summary.correctWords} / ${summary.wrongWords}`;
-    document.getElementById('res-chars').textContent = `${summary.correctChars} / ${summary.incorrectChars} / ${summary.missedChars}`;
-    document.getElementById('res-error-rate').textContent = `${errorRate}%`;
-    document.getElementById('res-total-typed').textContent = String(state.stats.totalTypedChars);
+    setReportValue('final-wpm', String(wpm));
+    setReportValue('res-raw', String(raw));
+    setReportValue('final-acc', `${accuracy}%`);
+    setReportValue('res-consistency', `${consistency}%`);
+    setReportValue('res-mode', state.mode);
+    setReportValue('res-time', getModeDetail());
+    setReportValue('res-duration', `${elapsedSeconds}s`);
+    setReportValue('res-words', `${summary.correctWords} / ${summary.wrongWords}`);
+    setReportValue('res-chars', `${summary.correctChars} / ${summary.incorrectChars} / ${summary.missedChars}`);
+    setReportValue('res-error-rate', `${errorRate}%`);
+    setReportValue('res-total-typed', String(state.stats.totalTypedChars));
+    setReportValue('res-source', meta.source);
+    setReportValue('res-generation-counts', `${meta.datasetWords} / ${meta.generatedWords}`);
+    setReportValue('res-generation-shape', `${meta.sentenceLength} chars / ${meta.duplicatesAvoided}`);
+    setReportValue(
+        'res-generation-options',
+        `${meta.difficulty} / ${formatToggle(meta.punctuationEnabled)} / ${formatToggle(meta.numbersEnabled)}`
+    );
+    setReportValue('res-input-buffer', formatInputBuffer(meta));
+    setReportValue('res-session-footprint', formatBytes(meta.sessionMemoryFootprint || memory.sessionUsedBytes));
+    setReportValue('res-memory-pool', `${memory.totalPool} / ${memory.usedBytes} / ${memory.freeBytes}`);
+    setReportValue('res-memory-ops', `${memory.allocations} / ${memory.deallocations}`);
+    setReportValue('res-memory-session-ops', `${memory.sessionAllocations} / ${memory.sessionDeallocations}`);
+    setReportValue('res-memory-fragmentation', `${memory.fragmentationBlocks} / ${memory.largestFreeBlock}`);
 
     renderWords();
     renderChart();
@@ -671,7 +785,9 @@ async function restart() {
     elements.promptLabel.textContent = 'loading prompt...';
     elements.progressLabel.textContent = 'preparing session...';
 
-    state.words = await buildPromptWords();
+    const promptPayload = await buildPromptPayload();
+    state.words = promptPayload.words;
+    state.promptMeta = promptPayload.meta;
     resetRuntimeState();
 
     elements.timerDisplay.textContent = state.mode === 'time' ? String(state.selectedTime) : state.mode === 'zen' ? 'zen' : 'ready';
@@ -808,6 +924,7 @@ function bindActions() {
 
 function initialize() {
     elements.customText.value = state.customText;
+    state.promptMeta = normalizePromptMeta();
     updateSoundToggle();
     bindModeControls();
     bindToggles();

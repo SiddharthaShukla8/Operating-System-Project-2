@@ -32,13 +32,19 @@ Developed by:
 ```text
 TypingTutor/
 ├── backend/
+│   ├── data/
+│   │   └── words.json        # 650-word prompt dataset loaded once at startup
 │   ├── include/            # Custom headers for OS-style modules
+│   │   ├── input_engine.h
+│   │   ├── json_loader.h
 │   │   ├── keyboard.h
 │   │   ├── math.h
 │   │   ├── memory.h
 │   │   ├── mystring.h
 │   │   └── screen.h
 │   ├── src/                # Modular C implementations
+│   │   ├── input_engine.c
+│   │   ├── json_loader.c
 │   │   ├── keyboard.c
 │   │   ├── math.c
 │   │   ├── memory.c
@@ -57,26 +63,36 @@ TypingTutor/
 ## 5. Custom Libraries & OS Simulation
 
 ### `memory.c`
-- **Role**: Fixed memory-pool allocator (`my_alloc`, `my_reset`).
-- **OS Simulation**: Simulates static kernel memory allocation, ensuring zero fragmentation and deterministic performance.
+- **Role**: Custom first-fit allocator with block metadata, ownership tracking, reset support, and fragmentation awareness.
+- **OS Simulation**: Simulates virtual RAM management with visible allocation/deallocation flow and session memory accounting.
 
 ### `string.c`
-- **Role**: Length calculation, string comparison, and prompt synthesis.
-- **OS Simulation**: Simulates low-level character buffer processing used in terminal drivers.
+- **Role**: Length/compare/copy helpers plus JSON-driven sentence generation and response-string assembly.
+- **OS Simulation**: Simulates low-level character buffer processing used in prompt building and report formatting.
 
 ### `math.c`
 - **Role**: Custom multiplication and division logic.
 - **OS Simulation**: Replaces standard math headers with optimized integer arithmetic for system metrics.
 
+### `json_loader.c`
+- **Role**: Loads and validates `backend/data/words.json` once at startup, then stores the dataset in persistent memory.
+- **OS Simulation**: Simulates a safe resource loader with explicit parsing and ownership rules.
+
+### `input_engine.c`
+- **Role**: Circular-buffer input queue with polling APIs (`input_read`, `input_peek`, `input_flush`, `input_has_pending`).
+- **OS Simulation**: Simulates a low-level keyboard/input controller without directly coupling typing logic to `getchar`.
+
 ---
 
 ## 6. Workflow & Integration
 
-1. **Frontend Request**: The browser requests a typing prompt from the C backend.
-2. **Backend Synthesis**: The server resets the memory pool (`my_reset()`) and generates a prompt using `string.c`.
-3. **Prompt Delivery**: The generated text is served via the API to the frontend.
-4. **Interactive Session**: The user types; the frontend calculates live metrics (WPM/Acc).
-5. **Final Analytics**: Upon completion, a detailed report and performance graph are generated.
+1. **Startup Cache**: `server.c` initializes the allocator, loads `words.json` through `json_loader.c`, and keeps the dataset in persistent memory.
+2. **Prompt Request**: The frontend requests `/api/sentence` with count, difficulty, punctuation, and number flags.
+3. **Session Reset**: The backend resets non-persistent memory, resets the input engine session buffer, and prepares a fresh sentence allocation.
+4. **Sentence Generation**: `string.c` randomly selects words from the cached dataset, avoids nearby duplicates, and allocates the sentence safely inside the memory pool.
+5. **Metadata Response**: The backend returns the sentence plus dataset, input buffer, and memory-usage stats in one JSON payload.
+6. **Interactive Session**: The browser typing engine handles cursor flow, backspace, accuracy, WPM, raw speed, and consistency live.
+7. **Final Analytics**: The result screen shows performance graph, character/word errors, sentence-generation details, and allocator usage.
 
 ## 7. Features & Controls
 

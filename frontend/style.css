@@ -409,6 +409,20 @@ kbd {
     align-content: start;
 }
 
+.detail-section {
+    display: grid;
+    gap: 10px;
+}
+
+.detail-section-title {
+    margin: 0;
+    color: var(--accent-2);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
 .detail-item {
     padding: 14px;
     border-radius: 12px;
