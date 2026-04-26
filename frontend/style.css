@@ -20,67 +20,167 @@ body {
 }
 
 #app {
-    width: 1050px;
+    width: 1200px;
     max-width: 95%;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    padding: 0 4rem;
+}
+
+#sidebar {
+    position: fixed;
+    left: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    color: var(--sub-color);
+    opacity: 0.7;
+}
+
+.icon {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.icon:hover {
+    color: var(--text-color);
+    opacity: 1;
+}
+
+#zen-tooltip {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--sub-color);
+    font-size: 1rem;
+    opacity: 0.8;
+    pointer-events: none;
+    z-index: 5;
+    transition: 0.3s;
+}
+
+#header {
     display: flex;
     flex-direction: column;
     gap: 2rem;
 }
 
-#header {
+#logo-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 #logo {
-    font-size: 1.8rem;
+    font-size: 2.2rem;
     color: var(--text-color);
     font-weight: bold;
     cursor: pointer;
+    letter-spacing: -1px;
 }
 
-#modes {
+#nav-icons {
+    display: flex;
+    gap: 1.5rem;
+    color: var(--sub-color);
+}
+
+#nav-icons svg {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+#nav-icons svg:hover {
+    color: var(--text-color);
+}
+
+#config-bar {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0,0,0,0.15);
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    width: fit-content;
+    margin: 0 auto;
+    gap: 1.5rem;
+}
+
+.config-group {
     display: flex;
     gap: 1rem;
-    background-color: rgba(0,0,0,0.15);
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
+    align-items: center;
 }
 
-#modes span {
+.config-divider {
+    width: 3px;
+    height: 1.5rem;
+    background-color: var(--bg-color);
+    border-radius: 2px;
+}
+
+.config-group span {
     color: var(--sub-color);
     cursor: pointer;
     font-size: 0.85rem;
     transition: color 0.2s;
-    margin: 0 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
 }
 
-#modes span:hover, #modes span.active {
+.config-group span i {
+    font-style: normal;
+    font-size: 1rem;
+}
+
+.config-group span:hover, .config-group span.active {
     color: var(--main-color);
+}
+
+#language-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--sub-color);
+    font-size: 0.8rem;
+    margin-bottom: 2rem;
+    cursor: pointer;
 }
 
 #timer-display {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: var(--main-color);
     margin-bottom: 1rem;
     text-align: left;
-    height: 2.5rem;
+    height: 3rem;
 }
 
 #typing-container {
     position: relative;
-    font-size: 1.5rem;
-    line-height: 1.5;
+    font-size: 1.8rem;
+    line-height: 1.6;
     text-align: left;
-    min-height: 120px;
+    min-height: 150px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.word {
+    display: flex;
+    color: var(--sub-color);
 }
 
 #sentence-wrapper {
-    color: var(--sub-color);
-    white-space: pre-wrap;
-    word-break: break-all;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
     transition: 0.25s;
+    letter-spacing: 1px;
 }
 
 #sentence-wrapper span {
@@ -95,89 +195,161 @@ body {
     color: var(--error-color);
 }
 
+#sentence-wrapper span.missed {
+    color: var(--error-color);
+    opacity: 0.5;
+}
+
+#sentence-wrapper span.extra {
+    color: #791717;
+}
+
 #cursor {
     position: absolute;
     width: 2px;
-    height: 1.5rem;
+    height: 1.8rem;
     background-color: var(--main-color);
-    top: 0;
+    top: 0.2rem;
     left: 0;
     transition: 0.1s;
     animation: blink 1s infinite;
 }
 
-@keyframes blink {
-    50% { opacity: 0; }
-}
-
-#game-controls {
-    display: flex;
-    justify-content: center;
-    margin-top: 3rem;
-}
-
-#restart-btn, #play-again-btn {
-    background: none;
-    border: none;
-    color: var(--sub-color);
-    cursor: pointer;
-    transition: color 0.2s;
-}
-
-#restart-btn:hover, #play-again-btn:hover {
-    color: var(--text-color);
-}
-
 #result-view {
     display: flex;
-    flex-direction: column;
-    gap: 3rem;
+    flex-direction: row;
+    gap: 5rem;
+    align-items: center;
+    padding: 2rem 0;
 }
 
 .stats-header {
     display: flex;
-    gap: 4rem;
+    flex-direction: column;
+    gap: 2rem;
+    min-width: 200px;
 }
 
 .big-stat .label {
     color: var(--sub-color);
-    font-size: 1.5rem;
+    font-size: 1.8rem;
 }
 
 .big-stat .value {
     color: var(--main-color);
-    font-size: 4rem;
+    font-size: 5rem;
     line-height: 1;
 }
 
+#chart-container {
+    flex-grow: 2;
+    height: 250px;
+    background-color: rgba(0,0,0,0.05);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
 .detailed-stats {
-    display: flex;
-    gap: 4rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+    flex-grow: 1;
 }
 
 .small-stat .label {
     color: var(--sub-color);
-    font-size: 0.9rem;
+    font-size: 1rem;
     display: block;
 }
 
 .small-stat .value {
     color: var(--main-color);
-    font-size: 1.5rem;
-}
-
-.actions {
-    display: flex;
-    justify-content: center;
-}
-
-#footer {
-    text-align: center;
-    color: var(--sub-color);
-    font-size: 0.8rem;
-    margin-top: auto;
+    font-size: 2rem;
 }
 
 .hidden {
     display: none !important;
+}
+
+/* Command Line Styles */
+#command-line {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-bg {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(2px);
+}
+
+.modal-content {
+    position: relative;
+    background-color: var(--bg-color);
+    width: 600px;
+    max-width: 90%;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+#command-input {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 1.5rem;
+    outline: none;
+    margin-bottom: 1rem;
+}
+
+.command-item {
+    padding: 0.75rem 1rem;
+    color: var(--sub-color);
+    cursor: pointer;
+    border-radius: 0.3rem;
+}
+
+.command-item.active {
+    background-color: var(--main-color);
+    color: var(--bg-color);
+}
+
+#footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    color: var(--sub-color);
+    font-size: 0.85rem;
+    padding: 2rem 0;
+}
+
+.key {
+    background-color: rgba(255,255,255,0.1);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    color: var(--text-color);
+}
+
+#footer-links {
+    display: flex;
+    gap: 1.5rem;
+}
+
+#footer-links span {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+#footer-links span:hover {
+    color: var(--text-color);
 }

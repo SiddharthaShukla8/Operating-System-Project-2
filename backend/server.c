@@ -87,10 +87,23 @@ int main() {
         } else if (strncmp(buffer, "GET /app.js", 11) == 0) {
             serve_file(client_socket, "app.js", "application/javascript");
         } else if (strncmp(buffer, "GET /api/sentence", 17) == 0) {
+            /* Parse query parameters */
+            int word_count = 25;
+            char *count_ptr = strstr(buffer, "count=");
+            if (count_ptr) {
+                word_count = atoi(count_ptr + 6);
+            }
+
             /* Generate sentence using custom logic */
             my_reset();
-            char *sentence = generate_sentence(10);
-            char json[1024];
+            char *sentence = generate_sentence(word_count);
+            
+            /* Basic Punctuation/Numbers Simulation in C */
+            if (strstr(buffer, "numbers=true")) {
+                /* Add random numbers logic could go here */
+            }
+
+            char json[4096];
             sprintf(json, "{\"sentence\": \"%s\"}", sentence);
             send_response(client_socket, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n", json);
         } else {
