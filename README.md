@@ -2,6 +2,7 @@
 
 Typing Tutor is an OS-inspired typing tutor project built for an Operating Systems Laboratory capstone. The project combines a custom C backend with a browser-based interactive interface. The backend is responsible for low-level modules such as string handling, memory management, math helpers, screen helpers, keyboard helpers, and dynamic prompt generation, while the frontend provides a high-performance typing experience with live metrics.
 
+
 ## 1. Core Objective
 
 This project demonstrates:
